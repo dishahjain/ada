@@ -1,0 +1,140 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MOD 1000000007
+#define INF 1LL << 60
+
+// Structure for the adjacency list
+typedef struct {
+    int to;
+    int time;
+} Edge;
+
+typedef struct {
+    Edge* edges;
+    int size;
+    int capacity;
+} AdjList;
+
+void addEdge(AdjList* adj, int from, int to, int time) {
+    if (adj[from].size == adj[from].capacity) {
+        adj[from].capacity *= 2;
+        adj[from].edges = realloc(adj[from].edges, adj[from].capacity * sizeof(Edge));
+    }
+    adj[from].edges[adj[from].size++] = (Edge){to, time};
+}
+
+// Min-Heap node
+typedef struct {
+    long long dist;
+    int node;
+} HeapNode;
+
+// Min-Heap
+typedef struct {
+    HeapNode* data;
+    int size;
+    int capacity;
+} MinHeap;
+
+MinHeap* createHeap(int capacity) {
+    MinHeap* h = malloc(sizeof(MinHeap));
+    h->data = malloc(sizeof(HeapNode) * capacity);
+    h->size = 0;
+    h->capacity = capacity;
+    return h;
+}
+
+void swap(HeapNode* a, HeapNode* b) {
+    HeapNode temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void push(MinHeap* h, long long dist, int node) {
+    h->data[h->size++] = (HeapNode){dist, node};
+    int i = h->size - 1;
+    while (i > 0 && h->data[i].dist < h->data[(i - 1) / 2].dist) {
+        swap(&h->data[i], &h->data[(i - 1) / 2]);
+        i = (i - 1) / 2;
+    }
+}
+
+HeapNode pop(MinHeap* h) {
+    HeapNode top = h->data[0];
+    h->data[0] = h->data[--h->size];
+
+    int i = 0;
+    while (1) {
+        int smallest = i, l = 2 * i + 1, r = 2 * i + 2;
+        if (l < h->size && h->data[l].dist < h->data[smallest].dist) smallest = l;
+        if (r < h->size && h->data[r].dist < h->data[smallest].dist) smallest = r;
+        if (smallest == i) break;
+        swap(&h->data[i], &h->data[smallest]);
+        i = smallest;
+    }
+
+    return top;
+}
+
+int countPaths(int n, int** roads, int roadsSize, int* roadsColSize) {
+    AdjList* adj = malloc(n * sizeof(AdjList));
+    for (int i = 0; i < n; i++) {
+        adj[i].edges = malloc(4 * sizeof(Edge));
+        adj[i].size = 0;
+        adj[i].capacity = 4;
+    }
+
+    // Build graph
+    for (int i = 0; i < roadsSize; i++) {
+        int u = roads[i][0], v = roads[i][1], t = roads[i][2];
+        addEdge(adj, u, v, t);
+        addEdge(adj, v, u, t);
+    }
+
+    long long* dist = malloc(n * sizeof(long long));
+    int* ways = malloc(n * sizeof(int));
+    for (int i = 0; i < n; i++) {
+        dist[i] = INF;
+        ways[i] = 0;
+    }
+
+    MinHeap* pq = createHeap(n * 2);
+    dist[0] = 0;
+    ways[0] = 1;
+    push(pq, 0, 0);
+
+    while (pq->size > 0) {
+        HeapNode curr = pop(pq);
+        int u = curr.node;
+        long long d = curr.dist;
+
+        if (d > dist[u]) continue;
+
+        for (int i = 0; i < adj[u].size; i++) {
+            int v = adj[u].edges[i].to;
+            int time = adj[u].edges[i].time;
+
+            if (dist[v] > dist[u] + time) {
+                dist[v] = dist[u] + time;
+                ways[v] = ways[u];
+                push(pq, dist[v], v);
+            } else if (dist[v] == dist[u] + time) {
+                ways[v] = (ways[v] + ways[u]) % MOD;
+            }
+        }
+    }
+
+    int result = ways[n - 1];
+
+    // Free memory
+    for (int i = 0; i < n; i++) free(adj[i].edges);
+    free(adj);
+    free(dist);
+    free(ways);
+    free(pq->data);
+    free(pq);
+
+    return result;
+}
