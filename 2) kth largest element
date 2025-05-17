@@ -1,0 +1,45 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+// Swap helper
+void swap(int* a, int* b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Partition for Quickselect (descending order)
+int partition(int* nums, int left, int right, int pivot_index) {
+    int pivot = nums[pivot_index];
+    swap(&nums[pivot_index], &nums[right]); // Move pivot to end
+    int store_index = left;
+
+    for (int i = left; i < right; i++) {
+        if (nums[i] > pivot) { // Note: '>' for kth largest
+            swap(&nums[store_index], &nums[i]);
+            store_index++;
+        }
+    }
+    swap(&nums[store_index], &nums[right]); // Move pivot to its final place
+    return store_index;
+}
+
+// Quickselect
+int quickselect(int* nums, int left, int right, int k) {
+    if (left == right) return nums[left];
+
+    // Random pivot to avoid worst-case
+    int pivot_index = left + rand() % (right - left + 1);
+    pivot_index = partition(nums, left, right, pivot_index);
+
+    if (k == pivot_index) return nums[k];
+    else if (k < pivot_index) return quickselect(nums, left, pivot_index - 1, k);
+    else return quickselect(nums, pivot_index + 1, right, k);
+}
+
+int findKthLargest(int* nums, int numsSize, int k) {
+    srand(time(NULL));
+    // kth largest is (k-1)th in 0-based sorted descending array
+    return quickselect(nums, 0, numsSize - 1, k - 1);
+}
