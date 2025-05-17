@@ -1,0 +1,82 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Queue implementation
+typedef struct {
+    int* data;
+    int front, rear, size, capacity;
+} Queue;
+
+Queue* createQueue(int capacity) {
+    Queue* q = (Queue*)malloc(sizeof(Queue));
+    q->data = (int*)malloc(capacity * sizeof(int));
+    q->capacity = capacity;
+    q->size = q->front = q->rear = 0;
+    return q;
+}
+
+void enqueue(Queue* q, int value) {
+    q->data[q->rear++] = value;
+    q->size++;
+}
+
+int dequeue(Queue* q) {
+    q->size--;
+    return q->data[q->front++];
+}
+
+int isEmpty(Queue* q) {
+    return q->size == 0;
+}
+
+void freeQueue(Queue* q) {
+    free(q->data);
+    free(q);
+}
+
+// Main function
+int canFinish(int numCourses, int** prerequisites, int prerequisitesSize, int* prerequisitesColSize) {
+    int* indegree = (int*)calloc(numCourses, sizeof(int));
+    int** graph = (int**)malloc(numCourses * sizeof(int*));
+    int* graphSizes = (int*)calloc(numCourses, sizeof(int));
+
+    // Temporary max allocation per node (can be optimized)
+    for (int i = 0; i < numCourses; i++)
+        graph[i] = (int*)malloc(prerequisitesSize * sizeof(int));
+
+    // Build graph and indegree
+    for (int i = 0; i < prerequisitesSize; i++) {
+        int to = prerequisites[i][0];
+        int from = prerequisites[i][1];
+        graph[from][graphSizes[from]++] = to;
+        indegree[to]++;
+    }
+
+    // Initialize queue with courses having 0 indegree
+    Queue* q = createQueue(numCourses);
+    for (int i = 0; i < numCourses; i++) {
+        if (indegree[i] == 0) enqueue(q, i);
+    }
+
+    int count = 0;
+
+    // Process nodes in topological order
+    while (!isEmpty(q)) {
+        int course = dequeue(q);
+        count++;
+        for (int i = 0; i < graphSizes[course]; i++) {
+            int neighbor = graph[course][i];
+            if (--indegree[neighbor] == 0)
+                enqueue(q, neighbor);
+        }
+    }
+
+    // Free memory
+    freeQueue(q);
+    for (int i = 0; i < numCourses; i++) free(graph[i]);
+    free(graph);
+    free(graphSizes);
+    free(indegree);
+
+    return count == numCourses;  // True if all courses can be finished
+}
