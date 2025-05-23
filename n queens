@@ -1,0 +1,59 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+// Check if placing a queen at x[k] is safe (no conflicts with previous queens)
+bool place(int x[], int k) {
+    for (int i = 1; i < k; i++) {
+        // Check column conflicts and diagonal conflicts
+        if (x[i] == x[k] || (i - x[i]) == (k - x[k]) || (i + x[i]) == (k + x[k])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Print one solution: positions of queens on each row
+void printSolution(int x[], int n) {
+    for (int i = 1; i <= n; i++) {
+        printf("%d ", x[i]);
+    }
+    printf("\n");
+}
+
+void nQueens(int n) {
+    int x[11] = {0};  // Using 1-based indexing; size 11 to support up to 10 queens
+    int count = 0;
+    int k = 1;
+
+    while (k != 0) {
+        x[k] = x[k] + 1;  // Try next column in current row
+        while (x[k] <= n && !place(x, k)) {
+            x[k] = x[k] + 1;
+        }
+        if (x[k] <= n) {
+            if (k == n) {
+                printSolution(x, n);
+                printf("Solution found\n");
+                count++;
+            } else {
+                k++;
+                x[k] = 0;
+            }
+        } else {
+            k--;
+        }
+    }
+    printf("Total solutions: %d\n", count);
+}
+
+int main() {
+    int n;
+    printf("Enter the number of queens: ");
+    scanf("%d", &n);
+    if(n <= 0 || n > 10){
+        printf("Please enter a number between 1 and 10.\n");
+        return 1;
+    }
+    nQueens(n);
+    return 0;
+}
