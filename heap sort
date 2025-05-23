@@ -1,0 +1,47 @@
+#include <stdio.h>
+
+int a[10], n;
+
+void heapify(int a[], int n);  // Function prototype
+
+int main() {
+    printf("Enter the number of array elements: ");
+    scanf("%d", &n);
+
+    if (n <= 0 || n > 10) {
+        printf("Please enter a number between 1 and 10.\n");
+        return 1;
+    }
+
+    printf("Enter array elements: ");
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+
+    heapify(a, n);
+
+    printf("Heapified array elements: ");
+    for (int i = 0; i < n; i++) {
+        printf("%d ", a[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
+
+// Build max-heap using sift-up (bubble up) approach
+void heapify(int a[], int n) {
+    for (int k = 1; k < n; k++) {
+        int key = a[k];
+        int c = k;
+        int p = (c - 1) / 2;  // Parent index
+
+        // Bubble up while current key is greater than parent
+        while (c > 0 && key > a[p]) {
+            a[c] = a[p];  // Move parent down
+            c = p;
+            p = (c - 1) / 2;
+        }
+        a[c] = key;  // Place key in correct position
+    }
+}
